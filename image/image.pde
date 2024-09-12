@@ -1,6 +1,10 @@
 PImage img, output;
 int offset = 1;
+
+//sensitivity of edge detection
 float borderThreshold;
+
+//tints pixels towards #00ff00
 float greenTint;
 
 void setup() {
@@ -10,31 +14,29 @@ void setup() {
 
 void draw() {
   greenTint = (float)mouseX / img.width / 4;
-  borderThreshold = (float)mouseY / img.height * 10 + 5;
-  println(borderThreshold);
+  borderThreshold = (float)mouseY / img.height * 10 + 10;
+
   output = createImage(img.width, img.height, RGB);
   output.loadPixels();
+  
   // Loop through every pixel in the image
   for (int y = 1; y < img.height-1; y++) {   // Skip top and bottom edges
     for (int x = 1; x < img.width-1; x++) {  // Skip left and right edges
+      //basic edge detection, 
       int pos = (y)*img.width + (x);
-      int offsetPosA = (y + offset)*img.width + (x + offset);
-      int offsetPosB = (y + offset)*img.width + (x - offset);
-      
-      if (offsetPosA >= img.pixels.length) {
-        offsetPosA -= img.pixels.length;
-      }      
-      if (offsetPosB >= img.pixels.length) {
-        offsetPosB -= img.pixels.length;
+      int offsetPos = (y + offset)*img.width + (x - offset);
+
+      if (offsetPos >= img.pixels.length) {
+        offsetPos -= img.pixels.length;
       }
       
       color curColor = color(img.pixels[pos]);
-      color offsetColorA = color(img.pixels[offsetPosA]);
-      color offsetColorB = color(img.pixels[offsetPosB]);
+      color offsetColor = color(img.pixels[offsetPos]);
 
-      float difA = colorDifference(curColor, offsetColorA);
-      float difB = colorDifference(curColor, offsetColorB);
-      if (difA > borderThreshold || difB > borderThreshold){ 
+      float dif = colorDifference(curColor, offsetColor);
+      
+      //either display black for an edge or a green tint of the original colour
+      if (dif > borderThreshold){ 
         output.pixels[pos] = color(0);
       }
       else {
@@ -46,6 +48,7 @@ void draw() {
   image(output, 0, 0);
 }
 
+//determine the maximum difference between the channels of two colours
 float colorDifference(color curColor, color offsetColor){
   return max(red(curColor) - red(offsetColor), blue(curColor) - blue(offsetColor), green(curColor) - green(offsetColor));
 }
