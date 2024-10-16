@@ -1,14 +1,17 @@
 class Input {
   char character;
-  int time;
-  
-  Input(char c, int t) {
-    character = c;
-    time = t;
-  }
-  
+  float time;
+  AudioPlayer sound;
+  Boolean isLetter = false;
+
   Input(char c) {
     character = c;
     time = 0;
+    for (char letter : letters) {
+      if (Character.toLowerCase(c) == letter) {
+        isLetter = true;
+        break;
+      }
+    }
   }
 }
