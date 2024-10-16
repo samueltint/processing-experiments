@@ -1,34 +1,33 @@
-int max = 100;
+int max = 8;
 
 class Carriage {
-  boolean first, last, hasData;
+  boolean first, last;
   int capacity;
   String name;
-  Table inData, outData;  
+  // array of tables for each sensor
+  Table[] inData, outData;  
   
-  Carriage(boolean first, boolean last, boolean hasData, int capacity, String name) {
+  Carriage(boolean first, boolean last, int capacity, String name, int numSensors) {
     this.first = first;
     this.last = last;
-    this.hasData = hasData;
-    if (this.hasData) {
-      this.capacity = capacity;  
-    }  
+    this.capacity = capacity;  
     this.name = name;
+    this.inData = new Table[numSensors];
+    this.outData = new Table[numSensors];
   }
   
   void setCapacity(int index) {
-    int inCount = inData.getInt(index, 1);  // Column 1 is the IN value
-    int outCount = outData.getInt(index, 1);  // Column 1 is the OUT value
-    capacity += inCount - outCount;  // Calculate occupancy as IN - OUT
+    int inCount = 0, outCount = 0;
+    
+    for (int i = 0; i < inData.length; i++){
+      inCount = inData[i].getInt(index, 1);  // Column 1 is the IN value
+      outCount = outData[i].getInt(index, 1);  // Column 1 is the OUT value
+    }
+    capacity = max(0, inCount - outCount);  // Calculate occupancy as IN - OUT
   }
   
   color getColor() {
-    if (hasData) {
-      return color(map(capacity,0,max,100,20), 100, 100);
-    }
-    else {
-      return color(0, 0, 60);
-    }
+    return color(map(capacity,0,max,100,20), 100, 100);
   }
   
 }
