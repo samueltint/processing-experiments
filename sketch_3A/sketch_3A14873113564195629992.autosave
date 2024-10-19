@@ -1,5 +1,8 @@
 import controlP5.*;
-import processing.sound.*;
+import beads.*;
+
+AudioContext ac;
+
 
 
 char[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
@@ -11,6 +14,7 @@ int stage = 0; // 0 - record inputs, 1 - process audio, 2 - animate
 
 void setup() {
   size(640, 360);
+  ac = new AudioContext();
 }
 
 void draw() {
@@ -27,7 +31,9 @@ void draw() {
         
         Input currentInput = inputs.get(inputIndex);
         if (currentInput.isLetter) {
-          currentInput.sound = new SoundFile(this, Character.toLowerCase(currentInput.character) + ".wav");
+          String path = Character.toLowerCase(currentInput.character) + ".wav";
+          currentInput.sample = new Sample(path);
+          currentInput.player = new SamplePlayer(ac, currentInput.sample);
         }
         inputIndex++;
       } else{
@@ -42,9 +48,9 @@ void draw() {
       if (inputIndex < inputs.size()) {
         Input currentInput = inputs.get(inputIndex);
         if (currentInput.isLetter) {
-          
-          currentInput.playSound();
-          text(currentInput.character, 5 * (inputIndex + 1), 100);
+          println("play");
+          playSound(currentInput);
+          text(currentInput.character, 5 * (inputIndex+1), 100);
         }
         delay((int)currentInput.time);
         inputIndex++;
@@ -57,7 +63,6 @@ void draw() {
 void keyPressed() {
   if (stage == 0) {
     if (key == '.' || keyCode == ENTER) {
-      inputs.get(inputIndex - 1).time = lastKeyTime * timeScale;
       stage = 1;
       inputIndex = 0;
       println("stage 1");
@@ -80,6 +85,14 @@ void keyTyped() {
     lastKeyTime = 0;
     inputIndex++;
   }
+}
+
+void playSound(Input input){
+
+    // Output the player to the speakers
+    ac.out.addInput(input.player);
+    ac.start();
+ 
 }
 
 String charsToString(ArrayList<Input> list) {
