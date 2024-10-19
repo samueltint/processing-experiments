@@ -1,6 +1,7 @@
 class Input {
   char character;
   float time = 0;
+  float speedFactor = 0;
   SoundFile sound;
   Boolean isLetter = false;
   
@@ -14,8 +15,12 @@ class Input {
     }
   }
   
-  void playSound(){
-    sound.rate((sound.duration() * 1000) / time);
+  void playSound() {
+    sound.rate(speedFactor);
     sound.play();
+  }
+  
+  void calculateSpeedFactor() {
+    speedFactor = constrain(average / time, 0.6, 1.5);
   }
 }
