@@ -22,7 +22,7 @@ void draw() {
   
   //calculate mouse speed
   float xDif = mouseX - pmouseX;
-  float yDif = mouseY - pmouseY;
+  float yDif = mouseX - pmouseX;
   float speed = sqrt(xDif * xDif + yDif * yDif);
   // convert into reaasonable range of amplitudes
   float amplitude = map(speed, 0, 300, 0.1, 1);
