@@ -21,13 +21,6 @@ float currentSoundLength = 0;
 float soundStartTime = 0;
 int stage = 0; // 0 - record inputs, 1 - record audio, 2 - animate
 color circleCol;
-float G = 1;
-float downwardsG = 0;
-ArrayList<Ball> balls = new ArrayList<Ball>();
-float ballSpeedFactor = 5;
-float friction = -0.9;
-
-
 void setup() {
   size(600,450);
   cp5 = new ControlP5(this);
@@ -58,7 +51,7 @@ void draw() {
       if(inputIndex < inputs.size()){
         Input currentInput = inputs.get(inputIndex);
         if (millis() >= nextSoundTrigger) {
-          balls.add(new Ball(currentInput.character, 20, currentInput.speedFactor * ballSpeedFactor));
+          circleCol = color(random(360),random(40, 80),random(50, 100));
           //play next sound
           if (currentInput.isLetter) {
             currentInput.playSound();
@@ -69,16 +62,17 @@ void draw() {
           soundStartTime = millis();
           nextSoundTrigger = millis() + currentSoundLength;
           inputIndex++;
-        }        
+          
+          
+        } 
+        
       }
-      
-      for (Ball ball : balls) {
-        ball.collide();
-        ball.update();
-        ball.display();  
-      }
-      
+      fill(circleCol);
+      ellipse(width/2, map(millis() - soundStartTime, 0, currentSoundLength, 0, height), 50, 50);
+      textSize(40);
       fill(0);
+      text(inputs.get(inputIndex - 1).character, width/2 - 10, map(millis() - soundStartTime, 0, currentSoundLength, 0, height) + 10);
+      
       textSize(15);
       text("Input: " + charsToString(inputs), 20, 100);
       text("Typing delay: " + inputs.get(inputIndex - 1).time, 20, 130);
