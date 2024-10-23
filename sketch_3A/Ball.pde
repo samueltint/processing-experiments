@@ -2,17 +2,25 @@ class Ball {
   char character;
   color col;
   float diameter;
+  float speed;
   PVector pos, vel;
   int id;
 
-  Ball(char _character, float _diameter, float speed){
+  Ball(char _character, float _diameter, float _speed){
     character = _character;
     diameter = _diameter;
-    col = color(random(360),random(40, 80),random(50, 100));
+    if(getLetterIndex(character) != -1){
+      col = color(map(getLetterIndex(character),0,26,0,360),50,90);
+    } else {
+      col = color(0, 0, 50);
+    }
     pos = new PVector(width/2, 100);
+    speed = _speed;
     float dir = random(TWO_PI);
     vel = new PVector(cos(dir) * speed, sin(dir) * speed);
+    id = balls.size();
   }
+  
   
   void collide() {
     for (int i = id + 1; i < balls.size(); i++) {
@@ -28,9 +36,6 @@ class Ball {
         float targetX = this.pos.x + cos(angle) * minDist;
         float targetY = this.pos.y + sin(angle) * minDist;
         
-        // Calculate spring-like response for collision
-        //float ax = (targetX - other.pos.x) * spring;
-        //float ay = (targetY - other.pos.y) * spring;
         float ax = (targetX - other.pos.x);
         float ay = (targetY - other.pos.y);
   
@@ -41,39 +46,26 @@ class Ball {
     }
   }
   
-  void addForce(Ball ball) {
-    PVector diff = PVector.sub(ball.pos, this.pos);
-    float dist = diff.mag();
-    float forceMag = 0;
-    
-    if(dist > 0.1) {
-      forceMag = G * ball.diameter / (dist * dist);
-    }
-    
-    
-    // apply forces
-    PVector acc = diff.normalize().mult(forceMag);
-    this.vel.add(acc);
-  }
+
   
   void update() {
-    vel.y += downwardsG;
+    vel = vel.normalize().mult(speed);
     pos.add(vel.copy());
     if (pos.x + diameter/2 > width) {
       pos.x = width - diameter/2;
-      vel.x *= friction;
+      vel.x *= -1;
     }
     else if (pos.x - diameter/2 < 0) {
       pos.x = diameter/2;
-      vel.x *= friction;
+      vel.x *= -1;
     }
     if (pos.y + diameter/2 > height) {
       pos.y = height - diameter/2;
-      vel.y *= friction;
+      vel.y *= -1;
     } 
     else if (pos.y - diameter/2 < 0) {
       pos.y = diameter/2;
-      vel.y *= friction;
+      vel.y *= -1;
     }
   }
   

@@ -21,6 +21,6 @@ class Input {
   }
   
   void calculateSpeedFactor() {
-    speedFactor = constrain(average / time, 0.6, 1.5);
+    speedFactor = constrain(average / time, minSoundFactor, maxSoundFactor);
   }
 }

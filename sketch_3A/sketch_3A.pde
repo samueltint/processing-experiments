@@ -13,6 +13,8 @@ SoundFile[] recordedAudios = new SoundFile[26];
 int lastKeyTime = 0;
 float sum = 0;
 float average = 0;
+float minSoundFactor = 0.4;
+float maxSoundFactor = 2;
 
 //manage animation
 int inputIndex = 0;
@@ -21,33 +23,40 @@ float currentSoundLength = 0;
 float soundStartTime = 0;
 int stage = 0; // 0 - record inputs, 1 - record audio, 2 - animate
 color circleCol;
-float G = 1;
+float G = 100;
 float downwardsG = 0;
 ArrayList<Ball> balls = new ArrayList<Ball>();
-float ballSpeedFactor = 5;
 float friction = -0.9;
-
+float spring = 0.05;
+float minBallSpeed = 2;
+float maxBallSpeed = 10;
+float ballSize = 10;
 
 void setup() {
-  size(600,450);
+  //size(600,500);
+  fullScreen();
   cp5 = new ControlP5(this);
   ellipseMode(CENTER);
   colorMode(HSB,360,100,100);
   textSize(20);
   noFill();
+  noStroke();
 }
 
 void draw() {
   switch(stage) {
     case 0 : // inputs
       background(0);
+      text("Type a sentence \nPress ENTER or \'.\' to finish", 20, 350);
       text(charsToString(inputs), 20, 50);
       lastKeyTime++;
       break;
     
     case 1 : // record audio
-      // skipping recording phase
+      background(0);
+      text(charsToString(inputs), 20, 50);
       text("Press each letter to record your voice for that sound", 20, 300);
+      text("For now I am using pre recorded audio, this is skipped", 20, 350);
       for(char letter : requiredLetters){
       recordLetter(letter);
       }
@@ -58,7 +67,7 @@ void draw() {
       if(inputIndex < inputs.size()){
         Input currentInput = inputs.get(inputIndex);
         if (millis() >= nextSoundTrigger) {
-          balls.add(new Ball(currentInput.character, 20, currentInput.speedFactor * ballSpeedFactor));
+          balls.add(new Ball(currentInput.character, ballSize, map(currentInput.speedFactor, minSoundFactor, maxSoundFactor, minBallSpeed, maxBallSpeed)));
           //play next sound
           if (currentInput.isLetter) {
             currentInput.playSound();
@@ -72,17 +81,21 @@ void draw() {
         }        
       }
       
+      // ball animation logic
       for (Ball ball : balls) {
         ball.collide();
         ball.update();
         ball.display();  
       }
       
+      // screen readouts
       fill(0);
       textSize(15);
-      text("Input: " + charsToString(inputs), 20, 100);
-      text("Typing delay: " + inputs.get(inputIndex - 1).time, 20, 130);
-      text("Speed multiplier: " + inputs.get(inputIndex - 1).speedFactor, 20, 160);
+      text("The speed of the balls and the audio are tied to how quickly you typed that letter", 20, 50);
+      text("Input: " + charsToString(inputs), 20, 75);
+      text("Current Letter: " + inputs.get(inputIndex - 1).character, 20, 100);
+      text("Typing delay: " + inputs.get(inputIndex - 1).time, 20, 125);
+      text("Speed multiplier: " + inputs.get(inputIndex - 1).speedFactor, 20, 150);
       
       break;
     
@@ -93,8 +106,10 @@ void keyPressed() {
   if (stage == 0) {
     if (key == '.' || keyCode == ENTER) {
       inputs.get(inputIndex - 1).time = lastKeyTime;
-      sum += lastKeyTime;
-      average = sum / inputs.size();
+      // I should include the last letter for the average, but right now it messes with the timing
+      //sum += lastKeyTime;
+      //average = sum / inputs.size();
+      average = sum / inputs.size() - 1;
       
       //add buttons for recording phase
       for (int i = 0; i < requiredLetters.size(); i++) {
