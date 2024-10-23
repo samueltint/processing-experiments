@@ -72,5 +72,8 @@ class Ball {
   void display() {
     fill(col);
     ellipse(pos.x, pos.y, diameter, diameter);
+    fill(#000000);
+    textSize(25);
+    text(character, pos.x, pos.y-10);
   }
 }
