@@ -1,19 +1,15 @@
 import controlP5.*;
-import processing.sound.*;
 import ddf.minim.*;
 import ddf.minim.ugens.*;
 
-Minim minim;
 ControlP5 cp5;
-
-Character[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+int stage = 0; // 0 - record inputs, 1 - record audio, 2 - animate
 
 // store inputs
+Character[] letters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 ArrayList<Input> inputs = new ArrayList<Input>();
 ArrayList<Character> requiredLetters = new ArrayList<Character>();
-SoundFile[] recordedAudios = new SoundFile[26];
-AudioInput in;
-AudioRecorder recorder;
+
 
 // calculate the typing speed for each character
 int lastKeyTime = 0;
@@ -22,27 +18,36 @@ float average = 0;
 float minSoundFactor = 0.4;
 float maxSoundFactor = 2;
 
-//manage animation
+// manage recording
+Minim minim;
+boolean recording = false;
+FilePlayer[] recordedAudios = new FilePlayer[26];
+AudioInput in;
+AudioRecorder recorder;
+AudioOutput out;
+
+// manage audio during simulation
 int inputIndex = 0;
 float nextSoundTrigger = 0;
 float currentSoundLength = 0;
 float soundStartTime = 0;
-int stage = 0; // 0 - record inputs, 1 - record audio, 2 - animate
-color circleCol;
-float G = 100;
-float downwardsG = 0;
+float baseSampleRate = 44100;
+
+// manage animation
 ArrayList<Ball> balls = new ArrayList<Ball>();
-float friction = -0.9;
-float spring = 0.05;
+color circleCol;
 float minBallSpeed = 2;
 float maxBallSpeed = 10;
 float ballSize = 10;
 
 void setup() {
-  //size(600,500);
-  fullScreen();
+  size(600,500);
+  //fullScreen();
   cp5 = new ControlP5(this);
   minim = new Minim(this);
+  in = minim.getLineIn(Minim.STEREO, 2048);
+  out = minim.getLineOut( Minim.STEREO );
+
   ellipseMode(CENTER);
   colorMode(HSB,360,100,100);
   textSize(20);
@@ -67,7 +72,7 @@ void draw() {
       break;
     
     case 2 : // animate
-      background(#ffffff);        
+      background(#ffffff);  
       if(inputIndex < inputs.size()){
         Input currentInput = inputs.get(inputIndex);
         if (millis() >= nextSoundTrigger) {
@@ -75,7 +80,7 @@ void draw() {
           //play next sound
           if (currentInput.isLetter) {
             currentInput.playSound();
-            currentSoundLength = currentInput.sound.duration() * 1000 * currentInput.speedFactor;
+            currentSoundLength = currentInput.sound.length();
           } else {
             currentSoundLength = 500 * currentInput.speedFactor;
           }
@@ -106,40 +111,25 @@ void draw() {
   }
 }
 
+// keyboard events
 void keyPressed() {
   if (stage == 0) {
     if (key == '.' || keyCode == ENTER) {
       inputs.get(inputIndex - 1).time = lastKeyTime;
-      // It should include the last letter for the average, but right now it messes with the timing
-      // sum += lastKeyTime;
-      // average = sum / inputs.size();
       average = sum / inputs.size() - 1;
-      
-      ////add buttons for recording phase
-      //for (int i = 0; i < requiredLetters.size(); i++) {
-      //  char letter = requiredLetters.get(i);
-      //  cp5.addButton("Record " + letter)  
-      //   .setLabel("" + letter) 
-      //   .setPosition(20 + (i % 9) * 60, 70 + (i / 9) * 60) 
-      //   .setSize(50, 50)
-      //   .onClick((event) -> recordLetter(letter)); 
-      //}
-      for(char letter : requiredLetters){
-        recordLetter(letter);
-      }
       
       cp5.addButton("stage2")
          .setLabel("Done")   
-         .setPosition(20, 270) 
+         .setPosition(20, 200) 
          .setSize(60, 30);
        
-      //move phases   
+      // next phase    
       stage = 1;
       inputIndex = 0;
       println("stage 1");
     } else if (keyCode == BACKSPACE && inputIndex > 0) {
-      inputIndex--;
       inputs.remove(inputIndex);
+      inputIndex--;
     }
   }
 }
@@ -158,49 +148,50 @@ void keyTyped() {
     }
     lastKeyTime = 0;
     inputIndex++;
-  } else if (stage == 1 && getLetterIndex(key) != -1) {
+  } else if (stage == 1 && getLetterIndex(key) != -1 && !recording) {
+    recording = true;
     recorder = minim.createRecorder(in, key + ".wav");
+    recorder.beginRecord();
+    println("begin recording " + key);
   } 
 }
 
 void keyReleased() {
-  if (stage == 1 && getLetterIndex(key) != -1) {
-    recordedAudios[getLetterIndex(key)] = new SoundFile(this, Character.toLowerCase(key) + ".wav");  
+  if (stage == 1 && getLetterIndex(key) != -1 && recording) {
+    recording = false;
+    recorder.endRecord();
+    println("end recording " + key);
+    recorder.save();
   } 
 }
 
+void recordLetter(char character){
+  recordedAudios[getLetterIndex(character)] = new FilePlayer(minim.loadFileStream(Character.toLowerCase(character) + ".wav")); 
+}
+  
+void stage2(){
+  for(char letter : requiredLetters){
+    recordLetter(letter);
+  }
+  for (Input input : inputs) {
+    input.calculateSpeedFactor();
+    if (input.isLetter) {
+      input.sound = recordedAudios[getLetterIndex(input.character)];
+      input.sound.patch(out);
+    }
+  }
+
+  cp5.hide();
+  stage = 2;
+}
+
+//util functions
 String charsToString(ArrayList<Input> list) {
   String output = "";
   for (Input item : list) {
     output += item.character;
     }
   return output;
-  }
-
-String timesToString(ArrayList<Input> list) {
-  String output = "";
-  for (Input item : list) {
-    output += (float)round(item.speedFactor * 100) / 100 + ", ";
-    }
-  return output;
-}
-
-void recordLetter(char character){
- println(character);
- recordedAudios[getLetterIndex(character)] = new SoundFile(this, Character.toLowerCase(character) + ".wav");  
- println(character);
- println(getLetterIndex(character));
-}
-
-void stage2(){
-  for (Input input : inputs) {
-    input.calculateSpeedFactor();
-    if (input.isLetter) {
-      input.sound = recordedAudios[getLetterIndex(input.character)];
-    }
-  }
-  cp5.hide();
-  stage = 2;
 }
 
 public int getLetterIndex(char character){

@@ -2,7 +2,7 @@ class Input {
   char character;
   float time = 0;
   float speedFactor = 0;
-  SoundFile sound;
+  FilePlayer sound;
   Boolean isLetter = false;
   
   Input(char c) {
@@ -16,7 +16,7 @@ class Input {
   }
   
   void playSound() {
-    sound.rate(speedFactor);
+    sound.setSampleRate(baseSampleRate * speedFactor);
     sound.play();
   }
   
