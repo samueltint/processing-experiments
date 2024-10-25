@@ -10,7 +10,7 @@ class Ball {
     character = _character;
     diameter = _diameter;
     if(getLetterIndex(character) != -1){
-      col = color(map(getLetterIndex(character),0,26,0,360),50,90);
+      col = color(map(getLetterIndex(character), 0, 26, 0, 360), 50, 90);
     } else {
       col = color(0, 0, 50);
     }
@@ -51,29 +51,30 @@ class Ball {
   void update() {
     vel = vel.normalize().mult(speed);
     pos.add(vel.copy());
-    if (pos.x + diameter/2 > width) {
-      pos.x = width - diameter/2;
-      vel.x *= -1;
+    if (pos.x + diameter/2 > width - padding) {
+      pos.x = width - padding - diameter/2;
+      vel.x = -vel.x;
     }
-    else if (pos.x - diameter/2 < 0) {
-      pos.x = diameter/2;
-      vel.x *= -1;
+    else if (pos.x - diameter/2 < padding) {
+      pos.x = padding + diameter/2;
+      vel.x = -vel.x;
     }
-    if (pos.y + diameter/2 > height) {
-      pos.y = height - diameter/2;
-      vel.y *= -1;
+    if (pos.y + diameter/2 > height - padding) {
+      pos.y = height - padding - diameter/2;
+      vel.y = -vel.y;
     } 
-    else if (pos.y - diameter/2 < 0) {
-      pos.y = diameter/2;
-      vel.y *= -1;
+    else if (pos.y - diameter/2 < padding) {
+      pos.y = padding + diameter/2;
+      vel.y = -vel.y;
     }
   }
   
   void display() {
+    noStroke();
     fill(col);
     ellipse(pos.x, pos.y, diameter, diameter);
-    fill(#000000);
-    textSize(25);
+    fill(0);
+    textSize(15);
     text(character, pos.x, pos.y-10);
   }
 }
